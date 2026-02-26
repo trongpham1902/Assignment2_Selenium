@@ -1,16 +1,13 @@
-package assmktnc; // Khai báo package đúng theo thư mục bạn chọn
+package assmktnc;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
+import org.openqa.selenium.*;
+import org.openqa.selenium.chrome.*;
+import org.openqa.selenium.support.ui.*;
 import org.testng.Assert;
 import org.testng.annotations.*;
 import java.time.Duration;
+import java.util.Collections;
 
 public class LoginTest {
     WebDriver driver;
@@ -21,50 +18,75 @@ public class LoginTest {
         WebDriverManager.chromedriver().setup();
         ChromeOptions options = new ChromeOptions();
         
-        // Headless Mode để chạy mượt trên GitHub Actions (Phần C)
+        // Né cơ chế chặn Bot để nút Tiếp tục hoạt động mượt hơn
+        options.addArguments("--disable-blink-features=AutomationControlled");
+        options.setExperimentalOption("excludeSwitches", Collections.singletonList("enable-automation"));
+        options.setExperimentalOption("useAutomationExtension", false);
+        
+        // Cấu hình cho GitHub Actions (Chạy ngầm không mở trình duyệt)
         if (System.getenv("GITHUB_ACTIONS") != null) {
-            options.addArguments("--headless");
-            options.addArguments("--no-sandbox");
-            options.addArguments("--disable-dev-shm-usage");
+            options.addArguments("--headless", "--no-sandbox", "--disable-dev-shm-usage");
         }
         
         driver = new ChromeDriver(options);
         driver.manage().window().maximize();
         wait = new WebDriverWait(driver, Duration.ofSeconds(15));
-        driver.get("https://www.dienmayxanh.com/");
-
-        // Mở form đăng nhập
-        WebElement loginBtn = wait.until(ExpectedConditions.elementToBeClickable(By.className("login-user")));
-        loginBtn.click();
+        driver.get("https://www.dienmayxanh.com/lich-su-mua-hang/dang-nhap");
     }
 
-    @Test(description = "TC01 - Nhập SĐT hợp lệ")
+    @Test(priority = 1, description = "TC01 – Nhập SĐT hợp lệ")
     public void TC01_ValidPhone() {
-        submitPhone("0901234777");
-        WebElement otpMsg = wait.until(ExpectedConditions.visibilityOfElementLocated(
+        submitPhone("0909723122");
+        
+        // Đợi bạn giải Captcha (nếu có). Sau khi có tích xanh, trang sẽ tự chuyển 
+        // hoặc bạn nhấn Enter/Click nút Tiếp tục.
+        System.out.println("TC01: Đang đợi xác nhận OTP...");
+        WebDriverWait waitLong = new WebDriverWait(driver, Duration.ofSeconds(45));
+        WebElement msg = waitLong.until(ExpectedConditions.visibilityOfElementLocated(
                 By.xpath("//*[contains(text(), 'Mã xác nhận đã được gửi')]")));
-        Assert.assertTrue(otpMsg.isDisplayed());
+        Assert.assertTrue(msg.isDisplayed(), "Lỗi: Không thấy thông báo gửi OTP!");
     }
 
-    @Test(description = "TC02 - SĐT không hợp lệ")
-    public void TC02_InvalidShortPhone() {
+    @Test(priority = 2, description = "TC02 - SĐT ít hơn 10 số")
+    public void TC02_InvalidPhoneShort() {
         submitPhone("09123");
-        WebElement errorMsg = wait.until(ExpectedConditions.visibilityOfElementLocated(By.className("error-text")));
-        Assert.assertEquals(errorMsg.getText(), "Số điện thoại không hợp lệ");
+        verifyErrorMessage();
     }
 
-    @Test(description = "TC04 - SĐT để trống")
+    @Test(priority = 3, description = "TC03 – SĐT chứa chữ cái")
+    public void TC03_PhoneWithLetters() {
+        submitPhone("09abc12345");
+        verifyErrorMessage();
+    }
+
+    @Test(priority = 4, description = "TC04 - SĐT để trống")
     public void TC04_EmptyPhone() {
         submitPhone("");
-        WebElement errorMsg = wait.until(ExpectedConditions.visibilityOfElementLocated(By.className("error-text")));
-        Assert.assertEquals(errorMsg.getText(), "Vui lòng nhập số điện thoại");
+        verifyErrorMessage();
     }
+
+    @Test(priority = 5, description = "TC05 – SĐT ký tự đặc biệt")
+    public void TC05_SpecialChars() {
+        submitPhone("09012###89");
+        verifyErrorMessage();
+    }
+
+    // --- HÀM DÙNG CHUNG ĐỂ TỐI ƯU CODE ---
 
     private void submitPhone(String phone) {
         WebElement input = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("txtPhoneNumber")));
         input.clear();
         input.sendKeys(phone);
-        driver.findElement(By.className("btn-submit")).click();
+        
+        // Nhấn Enter để kích hoạt form (Thay cho việc click nút Tiếp tục hay bị chặn)
+        input.sendKeys(Keys.ENTER);
+    }
+
+    private void verifyErrorMessage() {
+        // Sử dụng nội dung thông báo lỗi thực tế trên web: "Số điện thoại trống/không đúng định dạng"
+        WebElement errorMsg = wait.until(ExpectedConditions.visibilityOfElementLocated(
+                By.xpath("//*[contains(text(), 'không đúng định dạng')]")));
+        Assert.assertTrue(errorMsg.isDisplayed(), "Lỗi: Không hiển thị cảnh báo định dạng SĐT!");
     }
 
     @AfterMethod
