@@ -18,19 +18,20 @@ public class LoginTest {
         WebDriverManager.chromedriver().setup();
         ChromeOptions options = new ChromeOptions();
         
-        // Né cơ chế chặn Bot để nút Tiếp tục hoạt động mượt hơn
+        // Cấu hình bắt buộc để chạy trên GitHub Actions (Headless)
+        options.addArguments("--headless"); 
+        options.addArguments("--no-sandbox");
+        options.addArguments("--disable-dev-shm-usage");
+        options.addArguments("--window-size=1920,1080"); // Đảm bảo kích thước màn hình ảo
+        
+        // Né cơ chế chặn Bot
         options.addArguments("--disable-blink-features=AutomationControlled");
         options.setExperimentalOption("excludeSwitches", Collections.singletonList("enable-automation"));
         options.setExperimentalOption("useAutomationExtension", false);
         
-        // Cấu hình cho GitHub Actions (Chạy ngầm không mở trình duyệt)
-        if (System.getenv("GITHUB_ACTIONS") != null) {
-            options.addArguments("--headless", "--no-sandbox", "--disable-dev-shm-usage");
-        }
-        
         driver = new ChromeDriver(options);
         driver.manage().window().maximize();
-        wait = new WebDriverWait(driver, Duration.ofSeconds(15));
+        wait = new WebDriverWait(driver, Duration.ofSeconds(20));
         driver.get("https://www.dienmayxanh.com/lich-su-mua-hang/dang-nhap");
     }
 
