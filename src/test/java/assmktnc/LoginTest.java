@@ -17,17 +17,15 @@ public class LoginTest {
     public void setup() {
         WebDriverManager.chromedriver().setup();
         ChromeOptions options = new ChromeOptions();
-        
-        // Cấu hình bắt buộc để chạy trên GitHub Actions (Headless)
-        options.addArguments("--headless"); 
+        options.addArguments("--headless=new");
         options.addArguments("--no-sandbox");
         options.addArguments("--disable-dev-shm-usage");
-        options.addArguments("--window-size=1920,1080"); // Đảm bảo kích thước màn hình ảo
-        
-        // Né cơ chế chặn Bot
+        options.addArguments("--window-size=1920,1080");
+
+        // THÊM DÒNG NÀY: Giả lập trình duyệt Chrome trên Windows để né bị chặn IP
+        options.addArguments("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36");
+
         options.addArguments("--disable-blink-features=AutomationControlled");
-        options.setExperimentalOption("excludeSwitches", Collections.singletonList("enable-automation"));
-        options.setExperimentalOption("useAutomationExtension", false);
         
         driver = new ChromeDriver(options);
         driver.manage().window().maximize();
@@ -37,7 +35,7 @@ public class LoginTest {
 
     @Test(priority = 1, description = "TC01 – Nhập SĐT hợp lệ")
     public void TC01_ValidPhone() {
-        submitPhone("0909723122");
+        submitPhone("0827433122");
         
         // Đợi bạn giải Captcha (nếu có). Sau khi có tích xanh, trang sẽ tự chuyển 
         // hoặc bạn nhấn Enter/Click nút Tiếp tục.
