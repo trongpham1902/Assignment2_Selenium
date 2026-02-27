@@ -6,11 +6,8 @@
       <class name="assmktnc.LoginTest">
         <methods>
           <include name="tearDown"/>
-          <include name="TC03_PhoneWithLetters"/>
-          <include name="TC04_EmptyPhone"/>
           <include name="setup"/>
-          <include name="TC05_SpecialChars"/>
-          <include name="TC02_InvalidPhoneShort"/>
+          <include name="TC05_EmptyPassword"/>
         </methods>
       </class> <!-- assmktnc.LoginTest -->
     </classes>
